@@ -1,0 +1,15 @@
+# Maven build output
+target/
+
+# VS Code Java extension generated files
+.classpath
+.project
+.settings/
+.factorypath
+
+# VS Code workspace settings (optional — include this if you don't want
+# to share editor settings; leave it out if you want to track them)
+.vscode/
+
+# macOS folder metadata
+.DS_Store
