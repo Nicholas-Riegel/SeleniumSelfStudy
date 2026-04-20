@@ -17,6 +17,7 @@ This syllabus was designed in a previous conversation. Here is the full context 
 - The student does all hands-on work themselves (creating files, running commands). You provide exact commands/content but do not execute them.
 - Explain every concept clearly before writing any code. No unexplained copy-pasting.
 - Teach one section at a time. Complete it fully before moving on.
+- After each module, complete a problem set before moving to the next module. Problems are written as challenges (no code given upfront). Solutions are only shown after the student attempts them.
 
 **Where we are:**
 - Module 1 is complete. Start with Module 2: Locators.
@@ -44,7 +45,8 @@ Laravel Dusk background means browser automation concepts are already familiar �
 ## Progress
 
 - [x] Module 1: How Selenium Actually Works
-- [ ] Module 2: Locators
+- [x] Module 2: Locators
+- [ ] Module 2 Problem Set
 - [ ] Module 3: Interacting with Elements
 - [ ] Module 4: Waits
 - [ ] Module 5: Page Object Model (POM)
@@ -83,11 +85,15 @@ Module 10 (CI/headless running) is applied to an existing project rather than cr
 - [x] `@BeforeMethod` / `@AfterMethod` — just enough TestNG to write clean tests (full TestNG coverage is in Module 6)
 
 ## Module 2: Locators
-- [ ] ID, name, class, tag name — the easy ones
-- [ ] CSS selectors — the most important skill, used constantly
-- [ ] XPath — when to use it, how to write it without losing your mind
-- [ ] How to find and verify locators in browser DevTools
-- [ ] What makes a locator fragile vs. reliable
+- [x] ID, name, class, tag name — the easy ones
+- [x] CSS selectors — the most important skill, used constantly
+- [x] XPath — when to use it, how to write it without losing your mind
+- [x] How to find and verify locators in browser DevTools
+- [x] What makes a locator fragile vs. reliable
+
+## Module 2 Problem Set
+- [ ] 5 challenges covering all locator strategies against live sites
+- [ ] No code given upfront — attempt first, solutions shown on request
 
 ## Module 3: Interacting with Elements
 - [ ] Click, sendKeys, clear

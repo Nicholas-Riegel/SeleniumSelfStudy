@@ -28,7 +28,8 @@ public class Module1Test {
     @Test
     public void openBrowser() {
         driver.get("https://www.saucedemo.com");
-        System.out.println("Page title: " + driver.getTitle());
+        String title = driver.getTitle();
+        System.out.println("Page title: " + title);
     }
 
 }
