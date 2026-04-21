@@ -627,3 +627,350 @@ This attribute has no styling or functional purpose — it exists only for autom
 > A good locator breaks when the *element's purpose changes*, not when the *page's appearance changes*.
 
 ---
+
+## Module 3: Interacting with Elements
+
+### Section 1: `click()`, `sendKeys()`, `clear()`
+
+#### `sendKeys(text)`
+
+Simulates real keystrokes into a field. **It appends — it does not replace.** If a field already contains text and you call `sendKeys("hello")`, you get whatever was there before plus `"hello"` concatenated together.
+
+#### `clear()`
+
+Wipes the field's current value and fires the appropriate DOM events (important — some apps listen for those events to trigger validation). **Always call `clear()` before `sendKeys()` if there's any chance the field already has content.** Only works on editable fields (`input`, `textarea`) — not on read-only elements.
+
+The correct pattern for typing into a field safely:
+```java
+field.clear();
+field.sendKeys("your value");
+```
+
+#### `click()`
+
+Clicks the centre of the element. Two specific failure modes worth knowing by name:
+
+- **`ElementNotInteractableException`** — the element exists in the DOM but is hidden (`display: none`, zero height/width). Selenium refuses to click invisible elements because a real user couldn't either.
+- **`ElementClickInterceptedException`** — the element is visible, but something is overlapping it (cookie banner, sticky header, modal). Selenium finds your element, but the click lands on whatever is on top.
+
+#### The `Keys` enum
+
+`sendKeys()` also accepts special keystroke constants from the `Keys` class — not just strings:
+
+```java
+Keys.TAB          // move focus to the next field
+Keys.ENTER        // press Enter (same as RETURN — use either)
+Keys.RETURN       // press Enter
+Keys.BACK_SPACE
+Keys.ESCAPE
+Keys.chord(Keys.CONTROL, "a")  // Ctrl+A — select all (Windows/Linux)
+Keys.chord(Keys.COMMAND, "a")  // Cmd+A — select all (Mac)
+```
+
+The most common use: pressing Enter to submit a form without locating the submit button. This also tests that keyboard submission works — important for accessibility.
+
+**Key interview points:**
+- `sendKeys` appends — always `clear()` first if the field might have existing content
+- `ElementNotInteractableException` = element is hidden; `ElementClickInterceptedException` = something is overlapping it
+- `Keys.RETURN` / `Keys.ENTER` let you submit forms via keyboard — tests accessibility as well as functionality
+
+---
+
+### Section 2: `getText()` and `getAttribute()`
+
+These two methods look similar but read completely different things.
+
+#### `getText()`
+
+Returns the **visible text content** of an element — what a user would see on the page. Equivalent to the text between an element's opening and closing tags.
+
+Two important behaviours:
+- **Strips leading/trailing whitespace automatically** — no need to call `.trim()`
+- **Returns an empty string `""` if the element is hidden** — not an exception, just empty. Unexpected empty strings usually mean the element is there but not visible.
+
+#### `getAttribute(name)`
+
+Returns the value of an **HTML attribute** on the element — the things written inside the opening tag: `id`, `class`, `href`, `placeholder`, `value`, `type`, `disabled`, `checked`, etc.
+
+```java
+element.getAttribute("placeholder"); // the hint text shown in an empty field
+element.getAttribute("value");       // what's currently typed in an input field
+element.getAttribute("href");        // the URL a link points to
+element.getAttribute("type");        // e.g. "text", "password", "submit"
+element.getAttribute("checked");     // "true" if checked, null if not
+```
+
+#### The critical difference
+
+| Method | Reads | Example use |
+|---|---|---|
+| `getText()` | Visible text between tags | Error messages, headings, button labels |
+| `getAttribute("value")` | The `value` attribute | What's typed in an input field |
+| `getAttribute("href")` | The `href` attribute | Verifying a link's URL |
+| `getAttribute("placeholder")` | The `placeholder` attribute | Confirming hint text on an empty field |
+
+**The trap:** `<input>` is a self-closing tag — there's nothing between the tags, so `getText()` on an input always returns `""`. To read what's typed in a field, you must use `getAttribute("value")`.
+
+#### `getAttribute()` on boolean attributes
+
+Some attributes are boolean — present or absent, with no value:
+
+```html
+<input type="checkbox" checked>   <!-- checked is present -->
+<input type="checkbox">           <!-- checked is absent -->
+```
+
+- Attribute **present** → `getAttribute("checked")` returns `"true"`
+- Attribute **absent** → returns `null` (not `"false"` — null)
+
+Always check for `null`, not for the string `"false"`.
+
+**Key interview points:**
+- `getText()` = visible text; `getAttribute("value")` = what's in an input field — these are the two most commonly confused
+- `getText()` returns `""` on hidden elements and on inputs — not an exception
+- Boolean attributes return `"true"` when present, `null` when absent
+
+---
+
+### Section 3: `isDisplayed()`, `isEnabled()`, `isSelected()`
+
+These three methods check the **state** of an element. They all return a `boolean`.
+
+#### `isDisplayed()`
+
+Returns `true` if the element is visible to the user — rendered on screen, taking up space. Returns `false` if hidden via CSS (`display: none`, `visibility: hidden`, zero dimensions, etc.).
+
+**Critical distinction:** `isDisplayed()` requires the element to already exist in the DOM. It answers "is this existing element visible?" — not "does this element exist?". If the element isn't in the DOM at all, `findElement` will throw `NoSuchElementException` before you even get to call `isDisplayed()`. When an element might not be in the DOM at all, use `findElements` (plural) and check if the list is empty.
+
+Common use: asserting that an error message or success banner appeared after an action.
+
+#### `isEnabled()`
+
+Returns `true` if the element is interactive — i.e. not disabled. Returns `false` if the element has the `disabled` HTML attribute.
+
+Common use: asserting that a Submit button is greyed out until required fields are filled.
+
+#### `isSelected()`
+
+Returns `true` if the element is currently selected. Only meaningful for three element types:
+- Checkboxes — is it ticked?
+- Radio buttons — is it the active option?
+- `<option>` elements inside a `<select>` — is it the chosen option?
+
+Calling `isSelected()` on a regular button or text input is meaningless — it just returns `false`.
+
+**Prefer `isSelected()` over `getAttribute("checked")`** for checkboxes and radio buttons — it returns an actual `boolean` instead of a string or null.
+
+#### Getting elements by index from `findElements`
+
+When a page has multiple identical elements (like a list of checkboxes), use `findElements` to get the whole list, then `.get(index)` to pull out a specific one:
+
+```java
+// Returns a List<WebElement> of all checkboxes on the page
+// .get(0) = first, .get(1) = second — zero-indexed like all Java lists
+WebElement checkbox1 = driver.findElements(By.cssSelector("input[type='checkbox']")).get(0);
+WebElement checkbox2 = driver.findElements(By.cssSelector("input[type='checkbox']")).get(1);
+```
+
+**Key interview points:**
+- `isDisplayed()` = is it visible; `isEnabled()` = is it interactive; `isSelected()` = is it ticked/chosen
+- `isDisplayed()` requires the element to exist in the DOM first — it can't detect a missing element
+- `isSelected()` is only meaningful on checkboxes, radio buttons, and `<option>` elements
+- Prefer `isSelected()` over `getAttribute("checked")` — returns a real boolean, no null handling needed
+
+---
+
+### Section 4: Dropdowns — the `Select` class
+
+#### Why dropdowns need special treatment
+
+A native HTML dropdown uses a `<select>` tag containing `<option>` tags. You can't interact with it cleanly using just `click()` and `sendKeys()` — clicking opens it, but then you'd need to individually locate and click each `<option>`, which is fragile. Selenium provides a dedicated `Select` wrapper class for this.
+
+**Important:** `Select` only works with native `<select>` elements. Many modern sites use custom dropdowns built from `<div>`s and `<ul>`s styled to look like dropdowns — those are just regular elements and need `click()` like anything else. Always inspect before assuming.
+
+#### Using the `Select` class
+
+Wrap the `<select>` `WebElement` in a `Select` object, then call methods on that:
+
+```java
+// 1. Find the <select> element as usual
+WebElement dropdownElement = driver.findElement(By.id("dropdown"));
+
+// 2. Wrap it in a Select — this unlocks the dropdown-specific methods
+Select dropdown = new Select(dropdownElement);
+```
+
+Three ways to choose an option:
+
+```java
+// By visible text — what the user sees in the dropdown (must match exactly)
+dropdown.selectByVisibleText("Option 1");
+
+// By value — the value attribute on the <option> tag, not the displayed text
+// <option value="2">Option 2</option> — the value is "2"
+dropdown.selectByValue("2");
+
+// By index — zero-based position in the list (0 = first option)
+dropdown.selectByIndex(0);
+```
+
+Two useful reading methods:
+
+```java
+// Get the currently selected option as a WebElement, then read its text
+dropdown.getFirstSelectedOption().getText();
+
+// Get all options as a List<WebElement> — useful for looping
+dropdown.getOptions();
+```
+
+**Which selection method to use?**
+- `selectByVisibleText` — most readable; use when text is stable
+- `selectByValue` — more robust when the displayed text might change but the underlying value won't
+- `selectByIndex` — fragile (order can change); only use when text and value are both unreliable
+
+The import needed: `import org.openqa.selenium.support.ui.Select;`
+
+**Key interview points:**
+- `Select` only works on native `<select>` elements — custom dropdowns need `click()` instead
+- `selectByVisibleText` must match exactly what's shown — no partial matches
+- `getFirstSelectedOption().getText()` is how you read what's currently selected
+- `selectByValue` targets the HTML `value` attribute, not the visible text — inspect the HTML to find it
+
+---
+
+### Section 5: Alerts and Browser Dialogs
+
+#### What are browser alerts?
+
+Browser alerts are native OS-level dialog boxes — they're not part of the HTML page. Selenium can't reach them with `findElement` because they exist outside the DOM entirely.
+
+| Type | Description | Buttons |
+|---|---|---|
+| **Alert** | Simple message — "Something happened." | OK |
+| **Confirm** | Yes/no question — "Are you sure?" | OK / Cancel |
+| **Prompt** | Asks for input — "Enter your name:" | OK / Cancel + text field |
+
+#### `switchTo().alert()`
+
+When an alert is open, switch Selenium's focus to it:
+
+```java
+Alert alert = driver.switchTo().alert();
+```
+
+Methods on the `Alert` object:
+
+```java
+alert.getText();          // read the message text shown in the dialog
+alert.accept();           // click OK
+alert.dismiss();          // click Cancel (or close)
+alert.sendKeys("text");   // type into a prompt input only
+```
+
+**Critical rule:** If an alert is open and you try to interact with the page without handling it first, Selenium throws `UnhandledAlertException`. Always handle the alert before doing anything else.
+
+The import needed: `import org.openqa.selenium.Alert;`
+
+**Key interview points:**
+- Alerts are outside the DOM — `findElement` can't reach them, `switchTo().alert()` is the only way in
+- `accept()` = OK, `dismiss()` = Cancel
+- `sendKeys()` on an alert only works for prompt dialogs — it types into the prompt's input field
+- Leaving an alert unhandled causes `UnhandledAlertException` on the next page interaction
+
+---
+
+### Section 6: iframes
+
+#### What is an iframe?
+
+An `<iframe>` is an HTML element that embeds a completely separate HTML document inside the current page. It has its own DOM — Selenium can't find elements inside it with a normal `findElement` call from the outer page.
+
+#### The problem iframes create
+
+When you call `driver.findElement(...)`, Selenium searches the **current browsing context** (the active DOM). If your target element is inside an iframe, it's in a *different* DOM — invisible to Selenium until you switch into it.
+
+#### Switching into an iframe
+
+There are three overloads of `switchTo().frame()`:
+
+```java
+driver.switchTo().frame(WebElement iframeElement);  // by WebElement — most reliable
+driver.switchTo().frame("frameName");                // by name or id attribute
+driver.switchTo().frame(0);                          // by index (0-based) — fragile
+```
+
+Prefer the WebElement approach: find the `<iframe>` tag on the outer page first, then pass it in. This survives page changes better than name/index.
+
+#### Switching back out
+
+After you're done inside the iframe, you must switch back before touching anything on the outer page:
+
+```java
+driver.switchTo().defaultContent();  // back to the top-level page (works from any depth)
+driver.switchTo().parentFrame();     // one level up (useful for nested iframes)
+```
+
+**`defaultContent()` vs `parentFrame()`:** `defaultContent()` always goes back to the root — use it when you're done with iframes entirely. `parentFrame()` goes up just one level — useful when iframes are nested inside each other.
+
+#### The critical rule
+
+After switching into an iframe, *all* `findElement` calls search that iframe's DOM. After switching back out, they search the outer page again. Forgetting to call `defaultContent()` before interacting with outer-page elements causes `NoSuchElementException`.
+
+#### contenteditable elements (TinyMCE, etc.)
+
+Rich text editors like TinyMCE use a `contenteditable` `<body>` inside an iframe — not a standard `<input>` or `<textarea>`. This means:
+- `clear()` throws `InvalidElementStateException` — it only works on standard form inputs
+- `sendKeys()` may or may not work reliably depending on the editor's JavaScript interception
+- Properly controlling these editors requires JavaScript Executor — covered in Module 7
+
+**Key interview points:**
+- iframes have a separate DOM — `findElement` can't cross into them without `switchTo().frame()`
+- Always call `switchTo().defaultContent()` before interacting with the outer page after an iframe
+- Three switch methods: by WebElement (preferred), by name/id, by index
+- `defaultContent()` = back to root; `parentFrame()` = one level up
+- `contenteditable` elements (rich text editors) can't be controlled with `clear()` — need JavaScript Executor
+
+---
+
+### Section 7: File Uploads
+
+#### The core insight
+
+File upload inputs (`<input type="file">`) normally open an OS-level file picker dialog — which Selenium can't interact with. The trick: **don't open the dialog at all**. Just call `sendKeys()` on the file input with the absolute path to your file as a string. The browser accepts it silently, as if the user had selected the file manually.
+
+```java
+WebElement fileInput = driver.findElement(By.id("file-upload"));
+fileInput.sendKeys("/absolute/path/to/your/file.txt");
+```
+
+No special libraries, no OS automation, no `Robot` class — just `sendKeys()`.
+
+#### Where to keep test files
+
+Maven projects have a standard location for files used during tests: `src/test/resources/`. Anything placed there is available at runtime and clearly signals "this is test data, not production code."
+
+#### Building the path dynamically with `System.getProperty("user.dir")`
+
+You never want to hardcode an absolute path like `/Users/nicholas/Dev/...` — that breaks the moment anyone else runs the project.
+
+`System.getProperty("user.dir")` is a built-in Java system property that returns the **current working directory at runtime**. When Maven runs tests, that directory is always the Maven project root (the folder containing `pom.xml`). So:
+
+```java
+String filePath = System.getProperty("user.dir") + "/src/test/resources/test-upload.txt";
+```
+
+This resolves to the correct absolute path on any machine, regardless of where the project lives. It's the standard portable approach for referencing test resource files in Selenium projects.
+
+#### After upload
+
+After submitting the file, assert on the confirmation content the page returns — typically the filename. This proves the upload actually went through, not just that the button was clicked.
+
+**Key interview points:**
+- `sendKeys()` on `<input type="file">` bypasses the OS file picker — no OS automation needed
+- The file path must be **absolute** — relative paths don't work with file inputs
+- `System.getProperty("user.dir")` gives the Maven project root at runtime — use it to build portable paths
+- Store test files in `src/test/resources/` — that's the Maven convention for test data
+- Always assert on the post-upload confirmation, not just the click
+
+---

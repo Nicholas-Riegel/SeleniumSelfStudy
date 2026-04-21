@@ -106,3 +106,89 @@ Print the text of every title found, one per line. This simulates working with a
 *Hint: use `driver.findElements(By.xpath(...))` and loop over the results.*
 
 ---
+
+## Module 3 Problem Set — Interacting with Elements
+
+Create a new file at:
+```
+selenium-foundations/src/test/java/com/seleniumstudy/tests/Module3ProblemSet.java
+```
+
+Use the same `@BeforeMethod` / `@AfterMethod` pattern as `Module3Test`. Each challenge is one `@Test` method.
+
+---
+
+- [ ] Challenge 1 — click, sendKeys, clear (Section 1)
+
+Go to `https://the-internet.herokuapp.com/login`. Type an incorrect username and password and click the login button. Assert that the error message is displayed. Then clear both fields, type the correct credentials (`tomsmith` / `SuperSecretPassword!`), and click login again. Assert that the URL changes to contain `"/secure"`.
+
+*Hint: after a failed login the error element appears in the DOM — use `isDisplayed()` to confirm it. After a successful login there's no error, and the URL changes.*
+
+---
+
+- [ ] Challenge 2 — sendKeys with Keys (Section 1)
+
+Go to `https://the-internet.herokuapp.com/login`. Type the correct username into the username field, then press `Tab` to move focus to the password field (using `Keys.TAB`). Type the correct password and submit the form using `Keys.RETURN` — do not click the button. Assert the page contains the text `"You logged into a secure area!"`.
+
+*Hint: `sendKeys(Keys.TAB)` moves browser focus just like pressing the tab key. After tabbing, send the password to the password field — you still need to find it with `findElement` before calling `sendKeys`.*
+
+---
+
+- [ ] Challenge 3 — getText and getAttribute (Section 2)
+
+Go to `https://www.saucedemo.com` and log in. On the inventory page, find the **first product**. Use `getText()` to print its name and price. Then find the **Add to cart** button for that product and use `getAttribute("class")` to print its full class attribute.
+
+Then click the button. After clicking, use `getAttribute("class")` again on the same element and print the updated class. The class value should change after the item is added to the cart.
+
+*Hint: the same WebElement reference stays valid after a click — you don't need to re-find it.*
+
+---
+
+- [ ] Challenge 4 — isEnabled and isSelected (Section 3)
+
+Go to `https://the-internet.herokuapp.com/checkboxes`. There are two checkboxes. Assert that both are enabled. Then print each checkbox's `isSelected()` state. Click the one that is currently unchecked to check it, then assert both checkboxes are now selected.
+
+*Hint: use `findElements()` to get all checkboxes at once, then access them by index.*
+
+---
+
+- [ ] Challenge 5 — Select dropdowns (Section 4)
+
+Go to `https://the-internet.herokuapp.com/dropdown`. Select **Option 1** by visible text. Print the selected option's text. Then select **Option 2** by its value attribute. Print all available options using `getOptions()`, one per line. Assert that **Option 2** is the currently selected option.
+
+*Hint: `getFirstSelectedOption().getText()` gives you what's currently selected.*
+
+---
+
+- [ ] Challenge 6 — Alerts (Section 5)
+
+Go to `https://the-internet.herokuapp.com/javascript_alerts`. 
+
+1. Click the **JS Confirm** button. Dismiss the alert (cancel). Assert that the result text on the page says `"You clicked: Cancel"`.
+2. Click the **JS Prompt** button. Type your name into the prompt and accept it. Assert that the result text contains your name.
+
+Both assertions should be in the same test method.
+
+*Hint: after dismissing or accepting, the result message appears in a `<p id="result">` element on the page.*
+
+---
+
+- [ ] Challenge 7 — iframes (Section 6)
+
+Go to `https://the-internet.herokuapp.com/iframe`. Switch into the TinyMCE iframe. Assert that the editor body element (`#tinymce`) is displayed. Then switch back to the outer page with `defaultContent()`. Find the `<h3>` heading on the outer page and assert its text equals `"An iFrame containing the TinyMCE WYSIWYG Editor"`.
+
+Assert both things — that you were successfully inside the iframe, and that you successfully returned to the outer page.
+
+*Hint: if you forget to call `defaultContent()` before finding the heading, you'll get `NoSuchElementException` because you're still inside the iframe's DOM.*
+
+---
+
+- [ ] Challenge 8 — File upload (Section 7)
+
+Go to `https://the-internet.herokuapp.com/upload`. Reuse the `test-upload.txt` file from `src/test/resources/`. Upload it using `sendKeys()` on the file input — do not click the input or open any dialog. Click the upload button. Assert that the confirmation heading says `"File Uploaded!"` and that the displayed filename matches `"test-upload.txt"`.
+
+Use `System.getProperty("user.dir")` to build the file path so it works on any machine.
+
+*Hint: the file input has `id="file-upload"` and the submit button has `id="file-submit"`.*
+
+---

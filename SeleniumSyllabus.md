@@ -20,7 +20,7 @@ This syllabus was designed in a previous conversation. Here is the full context 
 - After each module, complete a problem set before moving to the next module. Problems are written as challenges (no code given upfront). Solutions are only shown after the student attempts them.
 
 **Where we are:**
-- Module 1 is complete. Start with Module 2: Locators.
+- Module 3 in progress. Sections 1–4 done (click/sendKeys/clear, getText/getAttribute, isDisplayed/isEnabled/isSelected, Select dropdowns). Next: Section 5 — Alerts and browser dialogs.
 - Project 1 (selenium-foundations) is set up at `/Users/nicholas/Dev/Selenium/SeleniumSelfStudy/selenium-foundations`.
 - Java 21, Maven, Selenium 4.20.0, TestNG 7.10.2 are all configured and working.
 - Tests are run via `mvn test` in the terminal for full output visibility.
@@ -96,14 +96,13 @@ Module 10 (CI/headless running) is applied to an existing project rather than cr
 - [ ] No code given upfront — attempt first, solutions shown on request
 
 ## Module 3: Interacting with Elements
-- [ ] Click, sendKeys, clear
-- [ ] Getting text and attribute values
-- [ ] Checking element state: isDisplayed, isEnabled, isSelected
-- [ ] Dropdowns with the `Select` class
-- [ ] Checkboxes and radio buttons
-- [ ] Alerts and browser dialogs
-- [ ] iframes — the most common source of "element not found" confusion
-- [ ] File uploads
+- [x] Click, sendKeys, clear
+- [x] Getting text and attribute values
+- [x] Checking element state: isDisplayed, isEnabled, isSelected
+- [x] Dropdowns with the `Select` class
+- [x] Alerts and browser dialogs
+- [x] iframes — the most common source of "element not found" confusion
+- [x] File uploads
 
 ## Module 4: Waits (The Most Important Module)
 - [ ] Why tests fail without waits
