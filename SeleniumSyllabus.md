@@ -20,7 +20,7 @@ This syllabus was designed in a previous conversation. Here is the full context 
 - After each module, complete a problem set before moving to the next module. Problems are written as challenges (no code given upfront). Solutions are only shown after the student attempts them.
 
 **Where we are:**
-- Module 3 in progress. Sections 1–4 done (click/sendKeys/clear, getText/getAttribute, isDisplayed/isEnabled/isSelected, Select dropdowns). Next: Section 5 — Alerts and browser dialogs.
+- Module 3 finished.
 - Project 1 (selenium-foundations) is set up at `/Users/nicholas/Dev/Selenium/SeleniumSelfStudy/selenium-foundations`.
 - Java 21, Maven, Selenium 4.20.0, TestNG 7.10.2 are all configured and working.
 - Tests are run via `mvn test` in the terminal for full output visibility.
@@ -47,8 +47,10 @@ Laravel Dusk background means browser automation concepts are already familiar �
 - [x] Module 1: How Selenium Actually Works
 - [x] Module 2: Locators
 - [ ] Module 2 Problem Set
-- [ ] Module 3: Interacting with Elements
-- [ ] Module 4: Waits
+- [x] Module 3: Interacting with Elements
+- [ ] Module 3 Problem Set
+- [x] Module 4: Waits
+- [ ] Module 4 Problem Set
 - [ ] Module 5: Page Object Model (POM)
 - [ ] Module 6: TestNG Test Framework
 - [ ] Module 7: JavaScript Executor
@@ -105,11 +107,11 @@ Module 10 (CI/headless running) is applied to an existing project rather than cr
 - [x] File uploads
 
 ## Module 4: Waits (The Most Important Module)
-- [ ] Why tests fail without waits
-- [ ] Implicit waits — what they do and why you should avoid them
-- [ ] Explicit waits: `WebDriverWait` + `ExpectedConditions`
-- [ ] Fluent waits — polling on a schedule
-- [ ] The conditions you'll actually use day-to-day
+- [x] Why tests fail without waits
+- [x] Implicit waits — what they do and why you should avoid them
+- [x] Explicit waits: `WebDriverWait` + `ExpectedConditions`
+- [x] Fluent waits — polling on a schedule
+- [x] The conditions you'll actually use day-to-day
 
 ---
 

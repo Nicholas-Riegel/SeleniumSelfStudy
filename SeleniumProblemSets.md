@@ -192,3 +192,54 @@ Use `System.getProperty("user.dir")` to build the file path so it works on any m
 *Hint: the file input has `id="file-upload"` and the submit button has `id="file-submit"`.*
 
 ---
+
+## Module 4 Problem Set — Waits
+
+Create a new file at:
+```
+selenium-foundations/src/test/java/com/seleniumstudy/tests/Module4ProblemSet.java
+```
+
+Use the same `@BeforeMethod` / `@AfterMethod` pattern as `Module4Test`. Each challenge is one `@Test` method. Use `WebDriverWait` + `ExpectedConditions` for all waits — no `Thread.sleep()`.
+
+---
+
+- [ ] Challenge 1 — `elementToBeClickable` before interaction
+
+Go to `https://www.saucedemo.com`. Before typing into either field or clicking the login button, use `elementToBeClickable` to wait for each element. Log in with `standard_user` / `secret_sauce`. After clicking login, use `urlContains` to confirm the page transition to the inventory page completed. Print the final URL.
+
+*Hint: reuse the same `WebDriverWait` instance for all three waits.*
+
+---
+
+- [ ] Challenge 2 — `visibilityOfElementLocated` after navigation
+
+Go to `https://www.saucedemo.com` and log in. After confirming the URL change, wait for the inventory list to be visible using `visibilityOfElementLocated`. Once visible, find all product name elements and print each one's text. There should be 6 products.
+
+*Hint: `findElements(By.className("inventory_item_name"))` after the wait.*
+
+---
+
+- [ ] Challenge 3 — `invisibilityOfElementLocated`
+
+Go to `https://the-internet.herokuapp.com/dynamic_loading/1`. This page has a hidden element and a **Start** button. Click Start, then use `invisibilityOfElementLocated` to wait for the loading bar (`#loading`) to disappear. Once it's gone, find the result element (`#finish`) and assert its text equals `"Hello World!"`.
+
+*Hint: the loading bar disappears when loading is complete — that's your signal that the result is ready.*
+
+---
+
+- [ ] Challenge 4 — `textToBePresentInElement`
+
+Go to `https://the-internet.herokuapp.com/dynamic_loading/2`. Click Start. This time the result element doesn't exist at all until loading completes — it's added to the DOM dynamically. Wait using `visibilityOfElementLocated` for the `#finish` element to appear, then separately assert using `textToBePresentInElement` that the element contains the text `"Hello World!"`. Print the element's text.
+
+*Hint: you'll need two separate `wait.until()` calls — one for visibility, one for the text check.*
+
+---
+
+- [ ] Challenge 5 — `alertIsPresent`
+
+Go to `https://the-internet.herokuapp.com/javascript_alerts`. Click the **JS Alert** button. Use `alertIsPresent()` to wait for the alert before handling it. Accept the alert. Then wait for the result `<p id="result">` to be visible and assert its text equals `"You successfully clicked an alert"`.
+
+*Hint: `alertIsPresent()` returns the `Alert` object — you can accept it directly from `wait.until()`.*
+
+---
