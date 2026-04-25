@@ -243,3 +243,86 @@ Go to `https://the-internet.herokuapp.com/javascript_alerts`. Click the **JS Ale
 *Hint: `alertIsPresent()` returns the `Alert` object — you can accept it directly from `wait.until()`.*
 
 ---
+
+## Module 5 Problem Set — Page Object Model
+
+Build a brand new Maven project for this — do not add to `selenium-pom`. Call it `selenium-pom-practice`. Set it up identically: Java 21, Selenium 4.20.0, TestNG 7.10.2.
+
+The site is `https://the-internet.herokuapp.com`. You'll build the full POM structure from scratch.
+
+### What to build
+
+```
+src/main/java/com/seleniumstudy/pages/
+    BasePage.java
+    LoginPage.java
+    SecurePage.java
+
+src/test/java/com/seleniumstudy/tests/
+    LoginTest.java
+```
+
+No code is given upfront. Build each class yourself based on what you learned in Module 5. Ask for a hint or solution for any specific challenge once you've attempted it.
+
+---
+
+- [x] Challenge 1 — `BasePage`
+
+Build `BasePage` from scratch. It should:
+- Hold a `WebDriver` and `WebDriverWait` as `protected` fields
+- Accept a `WebDriver` in its constructor and build the wait with a 10-second timeout
+- Provide `click(By)`, `type(By, String)`, and `getText(By)` utility methods — each with the correct `ExpectedConditions` wait built in
+
+Do not look at `selenium-pom`'s `BasePage`. Write it from memory.
+
+---
+
+- [x] Challenge 2 — `LoginPage`
+
+Go to `https://the-internet.herokuapp.com/login` and inspect the page. Build `LoginPage` with:
+- Private locators for the username field, password field, login button, and error message
+- A `login(String username, String password)` method that returns a `SecurePage`
+- A `getErrorMessage()` method
+
+*Hint: the error message element has a specific class — inspect it in DevTools.*
+
+---
+
+- [x] Challenge 3 — `SecurePage`
+
+Build `SecurePage` with:
+- A private locator for the success flash message
+- An `isLoaded()` method that returns `true` if the success message is visible
+- A `getSuccessMessage()` method that returns its text
+
+*Hint: the success message has `id="flash"`. Its text contains a newline character — `getText()` will include it. You may want to use `.contains()` for the assertion rather than exact equality.*
+
+---
+
+- [x] Challenge 4 — `LoginTest`
+
+Write the test class with two tests:
+1. `successfulLoginShowsSecurePage` — log in with `tomsmith` / `SuperSecretPassword!`, assert `SecurePage.isLoaded()` is true
+2. `invalidLoginShowsError` — log in with bad credentials, assert the error message contains `"Your username is invalid!"`
+
+Use `@BeforeMethod` / `@AfterMethod` for driver setup and teardown. Navigate to the login page in `@BeforeMethod`.
+
+Run `mvn test` — both tests should pass.
+
+---
+
+- [ ] Challenge 5 — Add a logout flow
+
+`SecurePage` has a **Logout** button. Extend your page classes so a test can do this full flow:
+
+```java
+SecurePage securePage = loginPage.login("tomsmith", "SuperSecretPassword!");
+LoginPage backToLogin = securePage.logout();
+assertTrue(backToLogin.isLoaded());
+```
+
+You'll need to:
+- Add a `logout()` method to `SecurePage` that clicks the logout button and returns a `LoginPage`
+- Add an `isLoaded()` method to `LoginPage` that confirms the login form is visible
+
+*Hint: `LoginPage.isLoaded()` can check for `visibilityOfElementLocated` on the login button.*
