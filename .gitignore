@@ -13,3 +13,4 @@ target/
 
 # macOS folder metadata
 .DS_Store
+.fake

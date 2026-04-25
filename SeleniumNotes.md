@@ -1200,3 +1200,311 @@ wait.until(ExpectedConditions.visibilityOfElementLocated(By.className("inventory
 - One `WebDriverWait` instance can be reused for multiple `wait.until()` calls throughout a test
 
 ---
+
+## Module 5: Page Object Model (POM)
+
+### Section 1: Why POM Exists
+
+#### The problem
+
+Without POM, locators and interactions are scattered directly in test methods:
+
+```java
+driver.findElement(By.id("user-name")).sendKeys("standard_user");
+driver.findElement(By.id("password")).sendKeys("secret_sauce");
+driver.findElement(By.id("login-button")).click();
+```
+
+With 2 tests this is manageable. With 20, you have a maintenance problem:
+
+- The login button's ID changes → update it in 20 places
+- You want to add a wait before clicking → update it in 20 places
+- A new person reads the test → they see raw WebDriver calls, not intent
+
+#### The two concerns POM separates
+
+| Concern | Belongs in |
+|---|---|
+| What the page looks like (locators) | Page class |
+| What the test does (flow + assertions) | Test class |
+
+A test written against a POM-structured project reads like a description of what a user does, not a WebDriver instruction manual:
+
+```java
+LoginPage loginPage = new LoginPage(driver);
+ProductsPage productsPage = loginPage.loginAs("standard_user", "secret_sauce");
+assertTrue(productsPage.isLoaded());
+```
+
+One locator change → fix it in one place. Every test that uses that page gets the fix for free.
+
+#### The one-sentence rule
+
+> Page classes know *what's on the page*. Tests know *what to verify*.
+
+### Section 2: Project Structure
+
+Project 2 (selenium-pom) uses a clean Maven layout. The key addition over Project 1 is a `pages/` package under `src/main/java/`:
+
+```
+src/
+  main/java/
+    com/seleniumstudy/
+      pages/
+        BasePage.java        ← shared driver, shared utility methods
+        LoginPage.java       ← locators + actions for the login page
+        ProductsPage.java    ← locators + actions for the products page
+  test/java/
+    com/seleniumstudy/
+      tests/
+        LoginTest.java       ← only flow and assertions, no raw WebDriver
+```
+
+Page classes live in `src/main/java/` — they're application support code, not tests. Tests live in `src/test/java/` as before.
+
+### Section 3: `BasePage`
+
+`BasePage` is the parent class that all page classes extend. Its two responsibilities:
+
+1. **Hold the driver** — passed in from the test and stored as a field, so every page class has access to it via inheritance without needing to pass it around
+2. **Provide shared utility methods** — wrappers around common `WebDriverWait` + WebDriver interactions, written once and reused by every page
+
+```java
+public class BasePage {
+
+    protected WebDriver driver;
+    protected WebDriverWait wait;
+
+    public BasePage(WebDriver driver) {
+        this.driver = driver;
+        this.wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+    }
+
+    protected void click(By locator) {
+        wait.until(ExpectedConditions.elementToBeClickable(locator)).click();
+    }
+
+    protected void type(By locator, String text) {
+        WebElement field = wait.until(ExpectedConditions.visibilityOfElementLocated(locator));
+        field.clear();
+        field.sendKeys(text);
+    }
+
+    protected String getText(By locator) {
+        return wait.until(ExpectedConditions.visibilityOfElementLocated(locator)).getText();
+    }
+}
+```
+
+Key points:
+- `protected` fields — accessible to child page classes via inheritance, not exposed publicly
+- The wait is built once in the constructor with a shared timeout — every subclass uses it automatically
+- `click()`, `type()`, `getText()` already embed the correct wait condition — page classes don't repeat this logic
+
+### Section 4: Page Classes
+
+Each page class represents one page (or significant section) of the application. The rules:
+
+1. **Locators are private** — they're implementation details. Tests never reference a `By` object directly.
+2. **Methods are expressive** — named after what the user does, not what Selenium does. `loginAs()` not `findUsernameAndSendKeys()`.
+3. **Methods return page objects** — an action that causes navigation returns the page you land on. This lets tests chain pages together fluently.
+
+```java
+public class LoginPage extends BasePage {
+
+    // Locators are private — the test never sees a By object
+    private final By usernameField = By.id("user-name");
+    private final By passwordField = By.id("password");
+    private final By loginButton   = By.id("login-button");
+    private final By errorMessage  = By.cssSelector("[data-test='error']");
+
+    public LoginPage(WebDriver driver) {
+        super(driver); // passes the driver up to BasePage
+    }
+
+    // Returns ProductsPage because that's where a successful login lands you
+    public ProductsPage loginAs(String username, String password) {
+        type(usernameField, username);
+        type(passwordField, password);
+        click(loginButton);
+        return new ProductsPage(driver);
+    }
+
+    public String getErrorMessage() {
+        return getText(errorMessage);
+    }
+}
+```
+
+The `return new ProductsPage(driver)` pattern is called **method chaining by page object**. The test doesn't need to know what URL login navigates to — `LoginPage` handles that and hands back the correct page object.
+
+### Section 5: The Test — What POM Looks Like from the Test Side
+
+```java
+public class LoginTest {
+
+    private WebDriver driver;
+
+    @BeforeMethod
+    public void setUp() {
+        driver = new ChromeDriver();
+        driver.get("https://www.saucedemo.com");
+    }
+
+    @AfterMethod
+    public void tearDown() {
+        if (driver != null) driver.quit();
+    }
+
+    @Test
+    public void successfulLoginLandsOnProductsPage() {
+        LoginPage loginPage = new LoginPage(driver);
+        ProductsPage productsPage = loginPage.loginAs("standard_user", "secret_sauce");
+        assertTrue(productsPage.isLoaded());
+    }
+
+    @Test
+    public void invalidPasswordShowsError() {
+        LoginPage loginPage = new LoginPage(driver);
+        loginPage.loginAs("standard_user", "wrong_password");
+        assertEquals(loginPage.getErrorMessage(), "Epic sadface: Username and password do not match");
+    }
+}
+```
+
+The test reads like a specification, not a WebDriver script. No `By` objects, no `sendKeys`, no `wait.until` — all of that is in the page classes where it belongs.
+
+**Key interview points:**
+- POM separates *what a page looks like* (page class) from *what the test verifies* (test class)
+- Locators are private fields — the test never references a `By` directly
+- `BasePage` holds the driver and shared utility methods (click, type, getText with built-in waits) — subclasses inherit them
+- Page methods return the next page object — tests chain pages together naturally
+- One locator change in one place fixes every test that uses that page
+
+### Section 6: How the Driver Actually Gets to the Page
+
+#### Dependency injection — the test owns the driver
+
+The page never creates the driver. It receives one. This is called **dependency injection** — the dependency (driver) is injected from outside rather than created internally.
+
+The full flow:
+
+```
+@BeforeMethod
+  driver = new ChromeDriver();        ← driver is BORN here
+
+@Test
+  new LoginPage(driver)               ← driver is PASSED IN
+       ↓
+  LoginPage constructor: super(driver)
+       ↓
+  BasePage constructor: this.driver = driver
+                        this.wait   = new WebDriverWait(driver, ...)
+
+  loginAs() calls type() and click()
+  — those BasePage methods use this.driver
+  — the exact same Chrome instance the test created
+
+@AfterMethod
+  driver.quit()                       ← driver DIES here
+```
+
+The test controls the entire driver lifecycle. The page borrows it.
+
+#### Why not put `@BeforeClass` / `@AfterClass` in `BasePage`?
+
+Some tutorials do this:
+
+```java
+public class BasePage {
+    protected WebDriver driver;
+
+    @BeforeClass
+    public void setUp() {
+        driver = new ChromeDriver();
+    }
+
+    @AfterClass
+    public void tearDown() {
+        driver.quit();
+    }
+}
+```
+
+This is a bad pattern. The problems:
+
+1. **`BasePage` is a utility class, not a test class.** Putting TestNG annotations in it gives it two jobs — managing driver lifecycle AND providing page utilities. Those are separate concerns.
+2. **Every test class that extends `BasePage` silently inherits that setup.** If you ever want a test to use a headless driver, Firefox, or a different timeout — you have to fight the inheritance.
+3. **`BasePage` now depends on TestNG**, which means it can't be used outside a test context.
+
+**The rule:** `BasePage` is a plain Java class. It knows nothing about TestNG. Driver lifecycle belongs entirely in the test class — `@BeforeMethod` creates it, `@AfterMethod` quits it.
+
+#### Why not add more methods to `BasePage` upfront?
+
+A raw `find()` wrapper adds nothing:
+
+```java
+// This is just noise — it's identical to calling driver.findElement() directly
+protected WebElement find(By locator) {
+    return driver.findElement(locator);
+}
+```
+
+The existing `click()`, `type()`, and `getText()` are worth having because they each do two things: interact *and* wait correctly. `click()` doesn't just call `.click()` — it waits for `elementToBeClickable` first. That's the value.
+
+Methods earn their place when a concrete need arises. If a page class hits something that would be useful everywhere (e.g. `isDisplayed(By)`, `waitForUrl(String)`), add it to `BasePage` then.
+
+### Section 7: `LoginPage` and `ProductsPage` in Detail
+
+#### `private final` locators
+
+```java
+private final By usernameField = By.id("user-name");
+```
+
+- `private` — the test can never see or reference this `By` object directly
+- `final` — the locator is set once when the class loads and never changes. Signals intent: this is a constant, not something that gets reassigned.
+
+#### `super(driver)` — the one required line
+
+Every page constructor must call `super(driver)`. That's what runs `BasePage`'s constructor, which stores the driver and creates the wait. Without it the driver and wait are never initialised — every inherited method would throw a `NullPointerException`.
+
+#### Returning the next page object
+
+```java
+public ProductsPage loginAs(String username, String password) {
+    type(usernameField, username);
+    type(passwordField, password);
+    click(loginButton);
+    return new ProductsPage(driver);  // ← same driver, passed forward
+}
+```
+
+`loginAs()` passes the same driver instance into `ProductsPage`. The test gets back a fully initialised `ProductsPage` without knowing anything about the URL or navigation that just happened. The test just works with the object it receives.
+
+#### `isLoaded()` — the standard page verification pattern
+
+```java
+public boolean isLoaded() {
+    return getText(pageTitle).equals("Products");
+}
+```
+
+Every page class should have an `isLoaded()` method. It reads a piece of content that only exists on that page and confirms it's correct. Tests call this immediately after navigation:
+
+```java
+ProductsPage productsPage = loginPage.loginAs("standard_user", "secret_sauce");
+assertTrue(productsPage.isLoaded()); // proves we actually landed here
+```
+
+This is better than asserting on the URL — it confirms the page rendered correctly, not just that the browser navigated to the right address.
+
+**Key interview points:**
+- Pages don't create drivers — they receive one. The test owns the lifecycle.
+- `@BeforeClass` in `BasePage` couples test infrastructure to a utility class — bad design
+- `super(driver)` is mandatory in every page constructor — it initialises the driver and wait in `BasePage`
+- Locators are `private final` — private so tests can't reach them, final because they're constants
+- Returning the next page object from an action method hides navigation details from the test
+- `isLoaded()` verifies page content rendered correctly — better than asserting on the URL alone
+
+---
