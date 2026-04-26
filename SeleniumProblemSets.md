@@ -311,7 +311,7 @@ Run `mvn test` — both tests should pass.
 
 ---
 
-- [ ] Challenge 5 — Add a logout flow
+- [x] Challenge 5 — Add a logout flow
 
 `SecurePage` has a **Logout** button. Extend your page classes so a test can do this full flow:
 

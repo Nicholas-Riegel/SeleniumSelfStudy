@@ -52,7 +52,7 @@ Laravel Dusk background means browser automation concepts are already familiar â
 - [x] Module 4: Waits
 - [ ] Module 4 Problem Set
 - [x] Module 5: Page Object Model (POM)
-- [ ] Module 5 Problem Set
+- [x] Module 5 Problem Set
 - [ ] Module 6: TestNG Test Framework
 - [ ] Module 7: JavaScript Executor
 - [ ] Module 8: Advanced Browser Interactions

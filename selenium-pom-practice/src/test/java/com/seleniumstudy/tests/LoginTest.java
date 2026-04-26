@@ -41,7 +41,14 @@ public class LoginTest {
         LoginPage loginPage = new LoginPage(driver);
         loginPage.loginAs("asdf", "asdsfd");
         Assert.assertTrue(loginPage.getErrorMessage().contains("Your username is invalid"));
+    }
 
+    @Test
+    public void loginAndLogout(){
+        LoginPage loginPage = new LoginPage(driver);
+        SecurePage securePage = loginPage.loginAs("tomsmith", "SuperSecretPassword!");
+        LoginPage backToLogin = securePage.logout();
+        Assert.assertTrue(backToLogin.isLoaded());
     }
 
 }

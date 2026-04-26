@@ -9,7 +9,8 @@ public class LoginPage extends BasePage {
     private final By passwordField = By.id("password");
     // private final By loginButton   = By.cssSelector("button.radius[type='submit']");
     private final By loginButton   = By.tagName("button");
-    private final By errorMessage  = By.id("flash");
+    private final By flashMessage  = By.id("flash");
+    private final By pageHeading  = By.tagName("h2");
 
     public LoginPage(WebDriver driver) {
         super(driver);
@@ -25,7 +26,11 @@ public class LoginPage extends BasePage {
 
     // - A `getErrorMessage()` method
     public String getErrorMessage(){
-        return getText(errorMessage);
+        return getText(flashMessage);
+    }
+
+    public boolean isLoaded(){
+        return getText(pageHeading).equals("Login Page");
     }
 
 }
