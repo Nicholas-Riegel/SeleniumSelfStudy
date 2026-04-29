@@ -4,7 +4,7 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
-
+import org.openqa.selenium.support.ui.ExpectedConditions;
 
 public class SecurePage extends BasePage {
     
@@ -27,9 +27,9 @@ public class SecurePage extends BasePage {
     }
 
     public LoginPage logout(){
-        WebElement btn = wait.until(org.openqa.selenium.support.ui.ExpectedConditions.elementToBeClickable(logoutButton));
+        WebElement btn = wait.until(ExpectedConditions.elementToBeClickable(logoutButton));
         ((JavascriptExecutor) driver).executeScript("arguments[0].click();", btn);
-        wait.until(org.openqa.selenium.support.ui.ExpectedConditions.urlContains("/login"));
+        wait.until(ExpectedConditions.urlContains("/login"));
         return new LoginPage(driver);
     }
 

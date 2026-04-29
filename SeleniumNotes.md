@@ -1508,3 +1508,325 @@ This is better than asserting on the URL — it confirms the page rendered corre
 - `isLoaded()` verifies page content rendered correctly — better than asserting on the URL alone
 
 ---
+
+## Module 6: TestNG Test Framework
+
+### Section 1: The Full Lifecycle Annotation Set
+
+#### The four annotations
+
+TestNG gives you two tiers of lifecycle hooks:
+
+```
+@BeforeClass     ← runs once before the first @Test in the class
+  @BeforeMethod  ← runs before every single @Test
+    @Test
+  @AfterMethod   ← runs after every single @Test
+@AfterClass      ← runs once after the last @Test in the class
+```
+
+There are also `@BeforeSuite` / `@AfterSuite` (once for the entire test run) and `@BeforeTest` / `@AfterTest` (scoped to `<test>` blocks in `testng.xml`), but `@BeforeClass` / `@AfterClass` cover the vast majority of real-world usage.
+
+#### When to use which
+
+| Annotation | Use for |
+|---|---|
+| `@BeforeClass` | Expensive one-time setup: launching a browser, creating a DB connection |
+| `@AfterClass` | Tearing down what `@BeforeClass` created |
+| `@BeforeMethod` | Resetting state before each test: navigating to the start URL, clearing cookies |
+| `@AfterMethod` | Per-test cleanup: taking a screenshot on failure, logging test result |
+
+#### The most common real-world pattern
+
+Open the browser once in `@BeforeClass`, navigate to the start URL in `@BeforeMethod`. This avoids paying the browser-startup cost for every test, while still giving each test a clean page:
+
+```java
+public class LoginTest {
+
+    private WebDriver driver;
+
+    @BeforeClass
+    public void setUpClass() {
+        driver = new ChromeDriver();   // Chrome opens once for the whole class
+    }
+
+    @BeforeMethod
+    public void setUp() {
+        driver.get("https://www.saucedemo.com");   // fresh page before each test
+    }
+
+    @AfterClass
+    public void tearDownClass() {
+        if (driver != null) driver.quit();   // Chrome quits once at the end
+    }
+}
+```
+
+#### How TestNG handles instances (important)
+
+TestNG creates **one instance** of your test class, and all lifecycle methods run on that same instance. So `@BeforeClass` can set an instance field (`driver`) and every `@Test` sees it. No `static` needed.
+
+This is different from **JUnit**, which creates a new instance per test method — meaning `@BeforeClass` there *does* require `static`. If you ever switch to JUnit, that will catch you out.
+
+---
+
+### Section 2: `@DataProvider`
+
+#### What it solves
+
+Without `@DataProvider`, testing multiple input combinations means duplicating the same test method:
+
+```java
+@Test public void loginAsStandardUser() { ... }
+@Test public void loginAsLockedOutUser() { ... }
+@Test public void loginAsInvalidUser()   { ... }
+```
+
+`@DataProvider` lets you write the logic once and feed it a table of inputs.
+
+#### How it works
+
+A `@DataProvider` method returns a 2D `Object` array — each inner array is one row, and each row maps positionally to the parameters of the test method that uses it:
+
+```java
+@DataProvider(name = "loginScenarios")
+public Object[][] loginScenarios() {
+    return new Object[][] {
+        { "standard_user",  "secret_sauce", true  },
+        { "locked_out_user","secret_sauce", false },
+        { "standard_user",  "wrong_pass",   false }
+    };
+}
+
+@Test(dataProvider = "loginScenarios")
+public void loginScenario(String username, String password, boolean shouldSucceed) {
+    // runs 3 times — once per row
+}
+```
+
+TestNG calls `loginScenario` three times, injecting a different row each time. The output labels each run with its parameter values so you can see exactly which row failed.
+
+**Key rules:**
+- The `name` in `@DataProvider` must match the `dataProvider` value in `@Test` exactly
+- The `@DataProvider` method lives in the same class — no separate file needed
+- Return type is always `Object[][]`
+- Parameters in the test method must match the types in each row, in order
+
+#### Practical gotcha: shared browser state
+
+When sharing one browser instance across all tests (`@BeforeClass`), a successful login in one `@DataProvider` row leaves the browser in a logged-in state. The next row's `@BeforeMethod` needs to reset that state, or the page won't behave as expected.
+
+For saucedemo specifically, `deleteAllCookies()` isn't enough — it stores session state in `localStorage`. The full reset in `@BeforeMethod`:
+
+```java
+@BeforeMethod
+public void setUp() {
+    driver.get("https://www.saucedemo.com");
+    driver.manage().deleteAllCookies();
+    ((JavascriptExecutor) driver).executeScript("window.localStorage.clear();");
+    driver.navigate().refresh();
+}
+```
+
+Navigate first (so there's a real page context), then clear cookies and localStorage, then refresh so the page reloads clean.
+
+#### Suppressing Chrome's password manager popups
+
+When running tests against login forms, Chrome can interrupt with "save password?" or "password found in a breach" popups that block the test. The fix is to launch Chrome in **incognito mode** — incognito disables the password manager entirely:
+
+```java
+@BeforeClass
+public void setUpClass() {
+    ChromeOptions options = new ChromeOptions();
+    options.addArguments("--incognito");
+    driver = new ChromeDriver(options);
+}
+```
+
+`ChromeOptions` is how you configure Chrome's behaviour before launching. Incognito is the standard choice for test suites. Headless mode (Module 10) is also set via `ChromeOptions`.
+
+---
+
+### Section 3: Assertions with AssertJ
+
+#### Why not just use TestNG's assertions?
+
+TestNG's built-in assertions work but produce minimal failure messages:
+
+```java
+assertTrue(productsPage.isLoaded());
+// failure: expected [true] but found [false]
+```
+
+That tells you the assertion failed — nothing about why. AssertJ produces messages that describe the actual value and exactly which condition was violated.
+
+#### The pattern
+
+Everything starts with `assertThat()`. Pass it the actual value, then chain conditions:
+
+```java
+assertThat(actualValue).isEqualTo("expected");
+assertThat(someBoolean).isTrue();
+assertThat(someString).contains("partial match");
+assertThat(someString).isNotEmpty();
+assertThat(someList).hasSize(6);
+```
+
+Chain multiple conditions on the same value:
+
+```java
+assertThat(errorMessage)
+    .isNotNull()
+    .isNotEmpty()
+    .contains("Username and password do not match");
+```
+
+#### The assertions you'll use constantly in Selenium
+
+| Assertion | Use for |
+|---|---|
+| `.isTrue()` / `.isFalse()` | Boolean checks (`isLoaded()`, `isDisplayed()`) |
+| `.isEqualTo("text")` | Exact string match |
+| `.contains("text")` | Partial string match — great for error messages |
+| `.isNotEmpty()` | Any non-empty string or list |
+| `.hasSize(n)` | List/collection length |
+| `.startsWith("text")` | URL or title prefix checks |
+
+#### Adding AssertJ to a Maven project
+
+In `pom.xml` inside `<dependencies>`:
+
+```xml
+<dependency>
+    <groupId>org.assertj</groupId>
+    <artifactId>assertj-core</artifactId>
+    <version>3.25.3</version>
+    <scope>test</scope>
+</dependency>
+```
+
+Single import replaces all TestNG assert imports:
+
+```java
+import static org.assertj.core.api.Assertions.assertThat;
+```
+
+---
+
+### Section 4: `testng.xml` Suites
+
+#### What it does
+
+`mvn test` by default discovers and runs every class ending in `Test`. `testng.xml` gives you explicit control: which classes run, in what groupings, and with what filters. It lives at the project root alongside `pom.xml`.
+
+#### Basic structure
+
+```xml
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="Saucedemo Suite">
+
+    <test name="All Tests">
+        <classes>
+            <class name="com.seleniumstudy.tests.LoginTest"/>
+        </classes>
+    </test>
+
+</suite>
+```
+
+Hierarchy: **suite** → one or more **test** blocks → one or more **class** entries. "Test" here is a logical grouping, not a test method — confusing naming, but that's TestNG's terminology.
+
+#### Wiring it to Maven
+
+Add a `<configuration>` block to the Surefire plugin in `pom.xml`:
+
+```xml
+<plugin>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-surefire-plugin</artifactId>
+    <version>3.2.5</version>
+    <configuration>
+        <suiteXmlFiles>
+            <suiteXmlFile>testng.xml</suiteXmlFile>
+        </suiteXmlFiles>
+    </configuration>
+</plugin>
+```
+
+#### Groups
+
+Tag test methods with `@Test(groups = "smoke")` or `@Test(groups = "regression")`. Rather than editing `testng.xml` to filter groups, pass the filter on the command line:
+
+```
+mvn test -Dgroups=smoke
+mvn test -Dgroups=regression
+mvn test -Dgroups="smoke,regression"
+```
+
+This keeps `testng.xml` static. The command-line filter is a runtime decision — exactly how CI pipelines work (fast smoke job pre-merge, full regression job nightly).
+
+**Important:** when filtering by groups, `@BeforeClass` / `@BeforeMethod` / `@AfterClass` will be skipped unless marked `alwaysRun = true`:
+
+```java
+@BeforeClass(alwaysRun = true)
+@BeforeMethod(alwaysRun = true)
+@AfterClass(alwaysRun = true)
+```
+
+---
+
+### Section 5: Parallel Execution
+
+#### What it does
+
+Runs multiple tests simultaneously. A 5-test suite taking 30s sequentially can run in ~10s with 3 threads.
+
+#### Enabling it in `testng.xml`
+
+Two attributes on `<suite>`:
+
+```xml
+<suite name="Saucedemo Suite" parallel="methods" thread-count="3">
+```
+
+- `parallel="methods"` — each `@Test` method gets its own thread
+- `thread-count="3"` — up to 3 tests run simultaneously
+
+Other values: `classes` (one thread per class), `tests` (one thread per `<test>` block). `methods` is most granular and most commonly used.
+
+#### The catch: shared driver
+
+Parallel tests cannot share one `WebDriver` instance — two threads fighting over the same browser will corrupt each other's actions.
+
+#### `ThreadLocal<WebDriver>`
+
+`ThreadLocal` is a standard Java class. Each thread that accesses it gets its own isolated copy:
+
+```java
+private ThreadLocal<WebDriver> driver = new ThreadLocal<>();
+
+// set (in @BeforeMethod):
+driver.set(new ChromeDriver(options));
+
+// get (in test methods):
+driver.get().findElement(...);
+new LoginPage(driver.get());
+
+// clean up (in @AfterMethod — important, prevents thread leaks):
+driver.get().quit();
+driver.remove();
+```
+
+With `ThreadLocal`, the pattern shifts from `@BeforeClass`/`@AfterClass` (one browser for the class) to `@BeforeMethod`/`@AfterMethod` (one browser per test). Each test is fully self-contained.
+
+Also add `parallel = true` to any `@DataProvider` so its iterations also run in parallel:
+
+```java
+@DataProvider(name = "loginScenarios", parallel = true)
+```
+
+#### Verification
+
+Don't just watch for simultaneous windows — check `Total time` in Maven output. Sequential: ~25-30s for 5 browser tests. Parallel with thread-count=3: ~5-10s.
+
+---

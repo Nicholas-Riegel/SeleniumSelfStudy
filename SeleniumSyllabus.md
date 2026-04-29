@@ -53,7 +53,7 @@ Laravel Dusk background means browser automation concepts are already familiar �
 - [ ] Module 4 Problem Set
 - [x] Module 5: Page Object Model (POM)
 - [x] Module 5 Problem Set
-- [ ] Module 6: TestNG Test Framework
+- [x] Module 6: TestNG Test Framework
 - [ ] Module 7: JavaScript Executor
 - [ ] Module 8: Advanced Browser Interactions
 - [ ] Module 9: Data-Driven Testing
@@ -121,18 +121,18 @@ Module 10 (CI/headless running) is applied to an existing project rather than cr
 ---
 
 ## Module 5: Page Object Model (POM)
-- [ ] Why POM exists and what problem it solves
-- [ ] Building a `BasePage` with shared utility methods
-- [ ] Structuring page classes and returning page objects
-- [ ] Keeping locators private and methods expressive
-- [ ] Building a clean POM project from scratch — no course debris
+- [x] Why POM exists and what problem it solves
+- [x] Building a `BasePage` with shared utility methods
+- [x] Structuring page classes and returning page objects
+- [x] Keeping locators private and methods expressive
+- [x] Building a clean POM project from scratch — no course debris
 
 ## Module 6: TestNG Test Framework
-- [ ] `@Test`, `@BeforeMethod`, `@AfterMethod`, `@BeforeClass`, `@AfterClass`
-- [ ] `@DataProvider` for data-driven tests
-- [ ] Assertions: TestNG's built-in vs. AssertJ (and why AssertJ is better)
-- [ ] Running specific tests and suites with `testng.xml`
-- [ ] Parallel test execution
+- [x] `@Test`, `@BeforeMethod`, `@AfterMethod`, `@BeforeClass`, `@AfterClass`
+- [x] `@DataProvider` for data-driven tests
+- [x] Assertions: TestNG's built-in vs. AssertJ (and why AssertJ is better)
+- [x] Running specific tests and suites with `testng.xml`
+- [x] Parallel test execution
 
 ## Module 7: JavaScript Executor
 - [ ] When Selenium's normal commands aren't enough

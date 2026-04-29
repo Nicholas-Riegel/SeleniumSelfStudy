@@ -1,5 +1,9 @@
 package com.seleniumstudy.tests;
 
+// This is the original LoginTest from the end of Module 5 — kept as a reference.
+// It shows the simplest working POM test before Module 6 added lifecycle annotations,
+// AssertJ, DataProvider, and testng.xml.
+
 import com.seleniumstudy.pages.LoginPage;
 import com.seleniumstudy.pages.ProductsPage;
 import org.openqa.selenium.WebDriver;
@@ -11,7 +15,7 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
-public class LoginTest {
+public class LoginTestOriginal {
 
     private WebDriver driver;
 

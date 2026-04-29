@@ -1,0 +1,16 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="Saucedemo Suite" parallel="methods" thread-count="3">
+
+    <test name="All Tests">
+        <classes>
+            <class name="com.seleniumstudy.tests.MultiThreadLoginTest"/>
+        </classes>
+    </test>
+
+    <!-- Now try:
+
+    mvn test — all 5 tests
+    mvn test -Dgroups=smoke — 1 test only
+    mvn test -Dgroups=regression — 4 tests only -->
+
+</suite>
