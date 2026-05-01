@@ -1830,3 +1830,114 @@ Also add `parallel = true` to any `@DataProvider` so its iterations also run in 
 Don't just watch for simultaneous windows — check `Total time` in Maven output. Sequential: ~25-30s for 5 browser tests. Parallel with thread-count=3: ~5-10s.
 
 ---
+
+## Module 7: JavaScript Executor
+
+### Why it exists
+
+Selenium's `click()`, `sendKeys()`, etc. work through the WebDriver protocol — they simulate real user input through the browser's event system. There are situations where that approach either can't work or fails unpredictably:
+
+- An element is technically in the DOM but Selenium considers it non-interactable (covered by an overlay, off-screen, etc.)
+- You need to scroll to a specific position or element before interacting with it
+- You want to read a JavaScript property on an element that isn't exposed as an HTML attribute
+- A site uses JavaScript-rendered values that don't appear in the raw DOM attributes
+
+In those cases you can drop down to JavaScript directly — run JS in the browser from your Java test code.
+
+### The casting pattern
+
+`WebDriver` doesn't have an `executeScript` method. But the actual object that `new ChromeDriver()` returns implements *both* `WebDriver` *and* `JavascriptExecutor` at runtime. To access `executeScript`, you cast:
+
+```java
+JavascriptExecutor js = (JavascriptExecutor) driver;
+js.executeScript("...");
+```
+
+Or inline — both are equivalent:
+
+```java
+((JavascriptExecutor) driver).executeScript("...");
+```
+
+This is safe because every major Selenium driver (`ChromeDriver`, `FirefoxDriver`, etc.) implements `JavascriptExecutor`.
+
+### `arguments[0]` — how Java objects are passed into JavaScript
+
+When you call `executeScript`, your Java code looks like:
+
+```java
+WebElement el = driver.findElement(By.id("something"));
+((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView(true);", el);
+```
+
+Selenium takes your JS string and internally wraps it in an anonymous function, injecting any extra parameters as arguments:
+
+```javascript
+(function() {
+    arguments[0].scrollIntoView(true);
+})(el);  // el is passed in as arguments[0]
+```
+
+`arguments` is a built-in JavaScript object that exists in every function — it holds all values passed into that function. So `arguments[0]` inside the JS string *is your Java WebElement*, converted to a live DOM element by the browser. `arguments[1]` would be a second parameter, and so on.
+
+**Why pass the element as `arguments[0]` rather than locating it in JS?**
+If you used `document.getElementById("something")` inside the JS string, the locator would exist in two places — once in Java and once in the JS. Passing the element as an argument means Java finds it using your normal locator strategy, then hands it to JavaScript. One source of truth.
+
+### `presenceOfElementLocated` vs `visibilityOfElementLocated`
+
+The JS executor methods in `BasePage` use `presenceOfElementLocated` rather than `visibilityOfElementLocated`. The distinction:
+
+| Condition | What it checks | Use for |
+|---|---|---|
+| `visibilityOfElementLocated` | Element is in DOM **and** visible on screen | Normal Selenium interactions |
+| `presenceOfElementLocated` | Element is in DOM (may be invisible or off-screen) | JS interactions |
+
+JavaScript can interact with elements that are technically off-screen or that Selenium considers non-visible. Scrolling an element into view is the classic example — the element exists in the DOM but is below the fold, so Selenium would call it non-visible. We use `presenceOfElementLocated` to confirm it's in the DOM and then let JS do the work.
+
+### The three utility methods
+
+#### `scrollToElement(By locator)`
+
+```java
+protected void scrollToElement(By locator) {
+    WebElement element = wait.until(ExpectedConditions.presenceOfElementLocated(locator));
+    ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView(true);", element);
+}
+```
+
+`scrollIntoView(true)` — the `true` argument means "align the element to the top of the viewport". Use `false` for bottom alignment.
+
+#### `jsClick(By locator)`
+
+```java
+protected void jsClick(By locator) {
+    WebElement element = wait.until(ExpectedConditions.presenceOfElementLocated(locator));
+    ((JavascriptExecutor) driver).executeScript("arguments[0].click();", element);
+}
+```
+
+`.click()` here is a native DOM method — not Selenium's `click()`. It bypasses Selenium's interactability check entirely. Use sparingly: a JS click can succeed on an element a real user couldn't actually reach. Legitimate for specific scenarios (elements under overlays in test environments), not a general-purpose fix for failing clicks.
+
+#### `getValueAttribute(By locator)`
+
+```java
+protected String getValueAttribute(By locator) {
+    WebElement element = wait.until(ExpectedConditions.presenceOfElementLocated(locator));
+    return (String) ((JavascriptExecutor) driver).executeScript("return arguments[0].value;", element);
+}
+```
+
+Two important details:
+- **`return` is required** — `executeScript` only sends a value back to Java if you explicitly return it from the JS snippet. Without `return`, you get `null`.
+- **`.value` vs `getAttribute("value")`** — `getAttribute("value")` reads the *initial* HTML attribute (what was in the markup when the page loaded). The JS `.value` property reads the *live* current value — what's actually in the field right now, including anything typed by the user or set by JavaScript at runtime.
+- **Return type is `Object`** — `executeScript` always returns `Object`. Cast to the expected type (`String`, `Long`, `Boolean`, etc. depending on what your JS returns).
+
+**Key interview points:**
+- `JavascriptExecutor` requires a cast — every major driver implements it, the cast is always safe
+- `arguments[0]` is the first argument passed to the anonymous function Selenium wraps your JS in — it's your Java WebElement as a live DOM node
+- `executeScript` only returns a value to Java if you `return` it explicitly in the JS
+- Use `presenceOfElementLocated` for JS interactions — JS can work with elements in the DOM that are off-screen
+- JS `.value` reads the live property; `getAttribute("value")` reads the initial HTML attribute — use JS for post-interaction field reads
+- `jsClick` bypasses real interactability checks — legitimate for specific scenarios, not a general-purpose fix for failing clicks
+
+---

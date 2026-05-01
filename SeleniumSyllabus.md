@@ -135,9 +135,9 @@ Module 10 (CI/headless running) is applied to an existing project rather than cr
 - [x] Parallel test execution
 
 ## Module 7: JavaScript Executor
-- [ ] When Selenium's normal commands aren't enough
-- [ ] `scrollIntoView`, JS click, reading values from the DOM
-- [ ] The casting pattern and why it's necessary
+- [x] When Selenium's normal commands aren't enough
+- [x] `scrollIntoView`, JS click, reading values from the DOM
+- [x] The casting pattern and why it's necessary
 
 ## Module 8: Advanced Browser Interactions
 - [ ] The `Actions` class: hover, right-click, drag-and-drop, keyboard combos
