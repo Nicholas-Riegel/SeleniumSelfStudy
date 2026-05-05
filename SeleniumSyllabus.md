@@ -55,7 +55,7 @@ Laravel Dusk background means browser automation concepts are already familiar â
 - [x] Module 5 Problem Set
 - [x] Module 6: TestNG Test Framework
 - [ ] Module 7: JavaScript Executor
-- [ ] Module 8: Advanced Browser Interactions
+- [x] Module 8: Advanced Browser Interactions
 - [ ] Module 9: Data-Driven Testing
 - [ ] Module 10: Running Tests in the Real World
 - [ ] Module 11: Interview Preparation
@@ -140,9 +140,9 @@ Module 10 (CI/headless running) is applied to an existing project rather than cr
 - [x] The casting pattern and why it's necessary
 
 ## Module 8: Advanced Browser Interactions
-- [ ] The `Actions` class: hover, right-click, drag-and-drop, keyboard combos
-- [ ] Screenshots on failure
-- [ ] Handling multiple browser windows and tabs
+- [x] The `Actions` class: hover, right-click, drag-and-drop, keyboard combos
+- [x] Screenshots on failure
+- [x] Handling multiple browser windows and tabs
 
 ---
 
