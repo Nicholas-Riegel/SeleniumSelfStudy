@@ -3,6 +3,10 @@
 
 <suite name="selenium-ci" verbose="1">
 
+    <listeners>
+        <listener class-name="io.qameta.allure.testng.AllureTestNg"/>
+    </listeners>
+
     <test name="Login Tests">
         <classes>
             <class name="com.seleniumstudy.tests.LoginTest"/>

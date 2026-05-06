@@ -1,6 +1,10 @@
 # Maven build output
 target/
 
+# Allure
+allure-results/
+.allure/
+
 # VS Code Java extension generated files
 .classpath
 .project
