@@ -1,0 +1,4 @@
+username,password,shouldSucceed
+standard_user,secret_sauce,true
+locked_out_user,secret_sauce,false
+,,false

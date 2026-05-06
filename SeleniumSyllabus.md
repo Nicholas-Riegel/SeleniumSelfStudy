@@ -56,7 +56,7 @@ Laravel Dusk background means browser automation concepts are already familiar â
 - [x] Module 6: TestNG Test Framework
 - [ ] Module 7: JavaScript Executor
 - [x] Module 8: Advanced Browser Interactions
-- [ ] Module 9: Data-Driven Testing
+- [x] Module 9: Data-Driven Testing
 - [ ] Module 10: Running Tests in the Real World
 - [ ] Module 11: Interview Preparation
 
@@ -151,9 +151,9 @@ Module 10 (CI/headless running) is applied to an existing project rather than cr
 ---
 
 ## Module 9: Data-Driven Testing
-- [ ] `@DataProvider` in depth
-- [ ] Reading test data from Excel using Apache POI
-- [ ] Reading from CSV
+- [x] `@DataProvider` in depth
+- [x] Reading test data from Excel using Apache POI
+- [x] Reading from CSV
 
 ## Module 10: Running Tests in the Real World
 > Applied to an existing project (Project 2 or 3) â€” no new Maven project created.
